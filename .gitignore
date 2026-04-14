@@ -1,0 +1,23 @@
+# Environments
+venv/
+env/
+.env
+
+# Built-in Database
+db.sqlite3
+
+# Python compilation cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Media, Static, and Log files
+media/
+logs/
+*.log
+
+# IDE & OS-specific files
+.vscode/
+.idea/
+.DS_Store
+*.swp

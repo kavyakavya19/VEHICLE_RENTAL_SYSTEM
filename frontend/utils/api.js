@@ -1,0 +1,42 @@
+import axios from 'axios';
+
+const API = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+API.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+API.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      try {
+        const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+        if (!refresh) throw new Error('No refresh token');
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/'}users/token/refresh/`,
+          { refresh }
+        );
+        const newAccess = res.data.access;
+        localStorage.setItem('token', newAccess);
+        original.headers.Authorization = `Bearer ${newAccess}`;
+        return API(original);
+      } catch {
+        ['token', 'refresh_token', 'user', 'is_profile_complete'].forEach((k) =>
+          localStorage.removeItem(k)
+        );
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default API;

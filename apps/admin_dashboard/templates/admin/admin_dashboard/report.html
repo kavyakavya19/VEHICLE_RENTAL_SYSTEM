@@ -1,0 +1,85 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Total Users</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #417690;">{{ stats.total_users }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Total Vehicles</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #417690;">{{ stats.total_vehicles }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Active Bookings</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #417690;">{{ stats.active_bookings }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Completed Bookings</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #417690;">{{ stats.completed_bookings }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Cancelled Bookings</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ stats.cancelled_bookings }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Total Fines Collected</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">₹{{ stats.total_fines }}</p>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+        <div style="background: #28a745; color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); flex: 2; text-align: center;">
+            <h2 style="margin: 0 0 10px 0;">Total Captured Revenue</h2>
+            <p style="font-size: 48px; font-weight: bold; margin: 0;">₹{{ stats.total_revenue }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Most Booked Vehicle</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #417690;">{{ stats.most_booked_vehicle }}</p>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px;">
+            <h3>Average Review Rating</h3>
+            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">{{ stats.average_rating }} / 5.0</p>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;">
+            <h2 style="color: #417690;">Monthly Revenue Trends</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <tr>
+                    <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd; color: #333;">Month</th>
+                    <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; color: #333;">Revenue Generated</th>
+                </tr>
+                {% for item in monthly_revenue %}
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">{{ item.month }}</td>
+                    <td style="text-align: right; padding: 12px; border-bottom: 1px solid #f0f0f0; font-weight: bold; color: #28a745;">₹{{ item.revenue }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" style="padding: 12px; text-align: center; color: #666;">No revenue data acquired natively yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;">
+            <h2 style="color: #417690;">Monthly Booking Demand</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <tr>
+                    <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd; color: #333;">Month</th>
+                    <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; color: #333;">Vehicles Dispatched</th>
+                </tr>
+                {% for item in monthly_bookings %}
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">{{ item.month }}</td>
+                    <td style="text-align: right; padding: 12px; border-bottom: 1px solid #f0f0f0; font-weight: bold; color: #417690;">{{ item.bookings }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" style="padding: 12px; text-align: center; color: #666;">No booking dispatch data captured natively yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

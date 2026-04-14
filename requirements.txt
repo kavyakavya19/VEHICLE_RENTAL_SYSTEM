@@ -1,0 +1,10 @@
+django
+djangorestframework
+djangorestframework-simplejwt
+drf-spectacular
+django-cors-headers
+django-filter
+Pillow
+python-dotenv
+google-auth
+requests
