@@ -9,3 +9,6 @@ python-dotenv
 google-auth
 requests
 gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary
