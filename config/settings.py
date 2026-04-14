@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
@@ -81,14 +82,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vehicle_rental_db',
-        'USER': 'root',
-        'PASSWORD': 'karthik@2005',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
+    'default': dj_database_url.parse("postgresql://postgres:kar8056963761@db.vlkqorcwzspudgnwbzxj.supabase.co:5432/postgres")
 }
 
 # Custom User Model
