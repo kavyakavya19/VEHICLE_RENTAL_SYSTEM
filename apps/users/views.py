@@ -13,6 +13,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+import traceback
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -20,8 +21,45 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
 
     def create(self, request, *args, **kwargs):
-        print(f"Registration request for email: {request.data.get('email')}")
-        return super().create(request, *args, **kwargs)
+        # 1. Log incoming request payload for debugging
+        print(f"Registration request payload: {request.data}")
+        
+        try:
+            # 2. Extract and validate data
+            serializer = self.get_serializer(data=request.data)
+            
+            if not serializer.is_valid():
+                # 3. Clean up the error response format for frontend parsing
+                errors = serializer.errors
+                if 'email' in errors:
+                    error_msg = errors['email'][0]
+                elif 'password' in errors:
+                    error_msg = errors['password'][0]
+                elif 'name' in errors:
+                    error_msg = errors['name'][0]
+                else:
+                    first_error = list(errors.values())[0][0]
+                    error_msg = str(first_error)
+                
+                return Response({"error": str(error_msg)}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 4. Save the user
+            self.perform_create(serializer)
+            
+            # 5. Return success schema
+            return Response(
+                {"message": "User registered successfully"},
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            # 6. Global try-catch to avoid 500 crashes
+            print("--- Error during user registration ---")
+            traceback.print_exc()
+            return Response(
+                {"error": "An internal server error occurred. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
