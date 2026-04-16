@@ -42,10 +42,10 @@ export default function MyEnquiriesPage() {
 
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px', paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+      <div className="stack-mobile justify-between items-center" style={{ marginBottom: '30px' }}>
         <div>
-          <h1 style={{ fontSize: '32px', fontWeight: '800' }}>My Enquiries</h1>
-          <p style={{ color: '#A1A1AA' }}>Track the status of your support questions.</p>
+          <h1 className="text-h2">My Enquiries</h1>
+          <p className="text-body" style={{ color: '#A1A1AA' }}>Track the status of your support questions.</p>
         </div>
         <Button variant="primary" onClick={() => router.push('/enquiry')}>New Enquiry</Button>
       </div>

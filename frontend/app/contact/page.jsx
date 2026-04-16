@@ -10,7 +10,7 @@ export default function ContactPage() {
       <h1 style={{ fontSize: '36px', marginBottom: '16px', textAlign: 'center' }}>Contact Us</h1>
       <p style={{ color: '#A1A1AA', fontSize: '16px', textAlign: 'center', marginBottom: '50px' }}>We are always here to help you get on the road.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="grid-responsive grid-responsive-3" style={{ gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
         
         <Card hoverEffect style={{ textAlign: 'center', padding: '40px 20px' }}>
           <div style={{ display: 'inline-flex', background: 'rgba(239, 62, 66, 0.1)', padding: '20px', borderRadius: '50%', marginBottom: '20px' }}>

@@ -43,7 +43,7 @@ export default function ActiveBookingCard({ booking, onAction }) {
         <span style={{ fontSize: '20px', fontWeight: '700', color: '#10B981' }}>₹{parseFloat(booking.total_price || 0).toLocaleString('en-IN')}</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+      <div className="grid-responsive grid-responsive-2" style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '10px' }}>
             <Calendar size={18} color="#A1A1AA" />

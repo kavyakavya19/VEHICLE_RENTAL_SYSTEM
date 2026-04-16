@@ -16,7 +16,8 @@ export const GoogleSignInButton = () => {
         // Prevent multiple initializations
         if (window.google?.accounts?.id?.initialize && window.__google_initialized) {
             if (buttonRef.current) {
-                window.google.accounts.id.renderButton(buttonRef.current, { theme: 'filled_black', size: 'large', width: window.innerWidth > 400 ? '380' : '100%' });
+                const btnWidth = window.innerWidth > 400 ? 380 : Math.max(200, window.innerWidth - 48);
+                window.google.accounts.id.renderButton(buttonRef.current, { theme: 'filled_black', size: 'large', width: btnWidth });
             }
             return;
         }
@@ -59,10 +60,11 @@ export const GoogleSignInButton = () => {
                 window.__google_initialized = true;
 
                 if (buttonRef.current) {
+                    const btnWidth = window.innerWidth > 400 ? 380 : Math.max(200, window.innerWidth - 48);
                     window.google.accounts.id.renderButton(buttonRef.current, { 
                         theme: 'filled_black', 
                         size: 'large', 
-                        width: window.innerWidth > 400 ? 380 : undefined
+                        width: btnWidth
                     });
                 }
             } catch (err) {

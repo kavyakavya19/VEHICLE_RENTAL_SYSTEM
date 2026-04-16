@@ -34,8 +34,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex' }}>
-      <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} className="animate-fade-in">
+    <div className="auth-layout-container">
+      <div className="auth-form-panel animate-fade-in">
         <Card style={{ width: '100%', maxWidth: '400px', background: 'rgba(255,255,255,0.02)' }}>
           <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Forgot Password</h2>
           <p style={{ color: '#A1A1AA', marginBottom: '32px' }}>Enter your email to receive a password reset link</p>

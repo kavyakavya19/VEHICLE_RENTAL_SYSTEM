@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Car, Menu, X, LogOut } from 'lucide-react';
@@ -11,6 +11,15 @@ export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, user, logout, loading } = useAuth();
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+    return () => document.body.classList.remove('menu-open');
+  }, [mobileMenuOpen]);
 
   const handleLogout = () => {
     logout();

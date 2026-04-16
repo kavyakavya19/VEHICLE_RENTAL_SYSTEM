@@ -19,7 +19,7 @@ export default function VehicleDetailPage() {
     const fetchData = async () => {
       try {
         const [vehicleRes, bookingsRes] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/'}vehicles/${id}/`),
+          axios.get(`${(process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/').replace(/\/?$/, '/')}vehicles/${id}/`),
           // We use public API for vehicle but need auth for bookings
           API.get('bookings/my-bookings/').catch(() => ({ data: [] }))
         ]);
@@ -40,7 +40,7 @@ export default function VehicleDetailPage() {
 
   // Use API utility for Authenticated requests
   const API = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/',
+    baseURL: (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/').replace(/\/?$/, '/'),
     headers: { Authorization: typeof window !== 'undefined' ? `Bearer ${localStorage.getItem('token')}` : '' }
   });
 
@@ -51,16 +51,16 @@ export default function VehicleDetailPage() {
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px' }}>
       <Button variant="ghost" onClick={() => router.push('/vehicles')} style={{ marginBottom: '20px' }}>← Back to Vehicles</Button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '40px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div className="grid-responsive grid-responsive-2" style={{ gap: '40px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', overflow: 'hidden' }}>
         <div style={{ backgroundImage: `url(${getVehicleImage(vehicle)})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '400px' }} />
         <div style={{ padding: '40px' }}>
           <span style={{ color: '#EF3E42', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>{vehicle.brand}</span>
-          <h1 style={{ fontSize: '36px', margin: '10px 0', color: '#FFF' }}>{vehicle.name}</h1>
+          <h1 className="text-h2" style={{ margin: '10px 0', color: '#FFF' }}>{vehicle.name}</h1>
           <h2 style={{ fontSize: '28px', color: '#10B981', marginBottom: '20px' }}>₹{vehicle.price_per_day}/day</h2>
           <p style={{ color: '#A1A1AA', lineHeight: '1.6', marginBottom: '30px', fontSize: '15px' }}>
             {vehicle.description || 'Experience the ultimate freedom with this well-maintained premium vehicle.'}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '40px' }}>
+          <div className="grid-responsive grid-responsive-2" style={{ gap: '20px', marginBottom: '40px' }}>
             {[
               { label: 'Vehicle Type', value: vehicle.vehicle_type || vehicle.type },
               { label: 'Condition', value: vehicle.condition || 'Premium' },

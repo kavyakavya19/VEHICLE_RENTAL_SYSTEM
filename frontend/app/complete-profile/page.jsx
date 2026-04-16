@@ -46,8 +46,8 @@ function CompleteProfileContent() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', paddingTop: '100px' }}>
-      <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} className="animate-fade-in">
+    <div className="auth-layout-container">
+      <div className="auth-form-panel animate-fade-in">
         <Card style={{ width: '100%', maxWidth: '500px', background: 'rgba(255,255,255,0.02)' }}>
           <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Complete Your Profile</h2>
           <p style={{ color: '#A1A1AA', marginBottom: '32px' }}>We need a bit more info before you can start booking vehicles.</p>

@@ -34,7 +34,7 @@ function WalletPageContent() {
 
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px' }}>
-      <h1 style={{ fontSize: '32px', marginBottom: '30px' }}>Digital Wallet</h1>
+      <h1 className="text-h2" style={{ marginBottom: '30px' }}>Digital Wallet</h1>
       
       {error && <div style={{ background: 'rgba(239, 62, 66, 0.1)', color: '#EF3E42', padding: '15px', borderRadius: '10px', marginBottom: '20px' }}>{error}</div>}
 

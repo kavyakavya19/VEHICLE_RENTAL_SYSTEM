@@ -80,8 +80,8 @@ function DashboardContent() {
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px', paddingBottom: '60px' }}>
       <div style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '8px' }}>Dashboard Overview</h1>
-        <p style={{ color: '#A1A1AA', fontSize: '16px' }}>Welcome back! Here's what's happening with your rentals today.</p>
+        <h1 className="text-h2" style={{ fontWeight: '800', marginBottom: '8px' }}>Dashboard Overview</h1>
+        <p className="text-body" style={{ color: '#A1A1AA' }}>Welcome back! Here's what's happening with your rentals today.</p>
       </div>
 
       <DashboardAlerts alerts={alerts} />
@@ -121,7 +121,7 @@ function DashboardContent() {
             </div>
           </div>
           {verificationData.status !== 'APPROVED' && (
-            <Button variant="primary" onClick={() => router.push('/verify-license')} style={{ background: verificationData.status === 'REJECTED' ? '#EF4444' : verificationData.status === 'PENDING' ? '#F59E0B' : '#EF3E42' }}>
+            <Button className="w-full-mobile" variant="primary" onClick={() => router.push('/verify-license')} style={{ background: verificationData.status === 'REJECTED' ? '#EF4444' : verificationData.status === 'PENDING' ? '#F59E0B' : '#EF3E42' }}>
               {verificationData.status === 'REJECTED' ? 'Re-upload License' : verificationData.status === 'PENDING' ? 'Check Status' : 'Upload License'}
             </Button>
           )}
@@ -130,7 +130,7 @@ function DashboardContent() {
 
       <StatsGrid stats={stats} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 2fr) minmax(300px, 1fr)', gap: '24px', alignItems: 'start' }}>
+      <div className="grid-responsive grid-sidebar-layout" style={{ alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: '24px' }}>
           <ActiveBookingCard 
             booking={active_booking} 

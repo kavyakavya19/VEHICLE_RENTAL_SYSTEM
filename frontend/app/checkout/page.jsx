@@ -93,7 +93,7 @@ function CheckoutContent() {
             )}
           </div>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 1fr', gap: '40px', alignItems: 'start' }}>
+        <div className="grid-responsive grid-sidebar-layout" style={{ alignItems: 'start' }}>
           {/* Summary */}
           <div style={{ background: 'rgba(0,0,0,0.4)', padding: '25px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h2 style={{ fontSize: '20px', marginBottom: '20px', color: '#A1A1AA' }}>Booking Summary</h2>

@@ -60,8 +60,8 @@ function AdminContent() {
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px' }}>
       {toast && <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9998, background: toast.type === 'success' ? '#10B981' : '#EF4444', color: '#fff', padding: '14px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxWidth: '360px' }}>{toast.msg}</div>}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <div><h1 style={{ fontSize: '32px', marginBottom: '6px' }}>Admin Dashboard</h1><p style={{ color: '#A1A1AA', fontSize: '14px' }}>Manage late returns and approve fines</p></div>
+      <div className="stack-mobile justify-between items-center" style={{ marginBottom: '30px' }}>
+        <div><h1 className="text-h2" style={{ marginBottom: '6px' }}>Admin Dashboard</h1><p className="text-body" style={{ color: '#A1A1AA' }}>Manage late returns and approve fines</p></div>
         <Button variant="ghost" onClick={fetchLateReturns} style={{ fontSize: '14px' }}>🔄 Refresh List</Button>
       </div>
 

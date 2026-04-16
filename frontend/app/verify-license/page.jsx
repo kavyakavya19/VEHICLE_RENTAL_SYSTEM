@@ -102,14 +102,14 @@ function VerifyLicenseContent() {
 
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px', paddingBottom: '60px', display: 'flex', justifyContent: 'center' }}>
-      <Card style={{ width: '100%', maxWidth: '540px', padding: '40px' }}>
+      <Card style={{ width: '100%', maxWidth: '540px', padding: '24px' }}>
         
         {isApproved ? (
           <div style={{ textAlign: 'center' }}>
             <div style={{ background: '#10B98115', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
               <CheckCircle2 size={40} color="#10B981" />
             </div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>Verified & Approved!</h1>
+            <h1 className="text-h2" style={{ fontWeight: '800', marginBottom: '12px' }}>Verified & Approved!</h1>
             <p style={{ color: '#A1A1AA', marginBottom: '32px' }}>Your driving license has been verified. You can now book any vehicle in our fleet.</p>
             <Button variant="primary" onClick={() => router.push('/vehicles')} style={{ width: '100%', padding: '16px' }}>
               Explore Vehicles & Book
@@ -120,7 +120,7 @@ function VerifyLicenseContent() {
             <div style={{ background: '#F59E0B15', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
               <UploadCloud size={40} color="#F59E0B" />
             </div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>Verification In Progress</h1>
+            <h1 className="text-h2" style={{ fontWeight: '800', marginBottom: '12px' }}>Verification In Progress</h1>
             <p style={{ color: '#A1A1AA', marginBottom: '32px' }}>We have received your documents and are currently reviewing them. This usually takes about 24 hours.</p>
             <Button variant="secondary" onClick={() => router.push('/dashboard')} style={{ width: '100%', padding: '16px' }}>
               Back to Dashboard
@@ -132,7 +132,7 @@ function VerifyLicenseContent() {
               <div style={{ background: 'rgba(239, 62, 66, 0.1)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <CheckCircle2 size={32} color="#EF3E42" />
               </div>
-              <h1 style={{ fontSize: '28px', fontWeight: '800' }}>{isRejected ? 'Update Your License' : 'Verify Your License'}</h1>
+              <h1 className="text-h2" style={{ fontWeight: '800' }}>{isRejected ? 'Update Your License' : 'Verify Your License'}</h1>
               <p style={{ color: '#A1A1AA', marginTop: '8px' }}>
                 {isRejected 
                   ? 'Your previous submission was rejected. Please upload a clear license copy.' 

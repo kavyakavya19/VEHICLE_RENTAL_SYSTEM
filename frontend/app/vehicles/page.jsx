@@ -57,7 +57,7 @@ export default function VehiclesPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
+      <div className="grid-responsive grid-responsive-3" style={{ gap: '30px' }}>
         {filtered.map((vehicle) => (
           <Card key={vehicle.id} hoverEffect style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ height: '200px', backgroundImage: `url(${getVehicleImage(vehicle)})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>

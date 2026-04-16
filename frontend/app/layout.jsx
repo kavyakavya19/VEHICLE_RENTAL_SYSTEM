@@ -9,6 +9,13 @@ export const metadata = {
   description: 'Browse and book premium vehicles across the country with Perfect Wheels.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">

@@ -43,8 +43,8 @@ export default function EnquiryPage() {
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px', display: 'flex', justifyContent: 'center' }}>
       <Card style={{ width: '100%', maxWidth: '600px' }}>
-        <h1 style={{ fontSize: '32px', marginBottom: '10px' }}>Submit an Enquiry</h1>
-        <p style={{ color: '#A1A1AA', marginBottom: '30px' }}>Have questions about a particular vehicle or rental policy? Send us an enquiry!</p>
+        <h1 className="text-h2" style={{ marginBottom: '10px' }}>Submit an Enquiry</h1>
+        <p className="text-body" style={{ color: '#A1A1AA', marginBottom: '30px' }}>Have questions about a particular vehicle or rental policy? Send us an enquiry!</p>
         
         {status && (
           <div style={{ 
@@ -62,7 +62,7 @@ export default function EnquiryPage() {
 
         <form onSubmit={handleSubmit}>
           <InputField label="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={!!user} required />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div className="grid-responsive grid-responsive-2" style={{ gap: '15px' }}>
             <InputField label="Phone Number" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} disabled={!!user} required />
             <InputField label="Email Address" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} disabled={!!user} required />
           </div>

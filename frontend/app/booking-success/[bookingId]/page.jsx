@@ -26,8 +26,8 @@ function BookingSuccessContent() {
         <div style={{ color: '#10B981', display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
           <CheckCircle size={80} />
         </div>
-        <h1 style={{ fontSize: '32px', marginBottom: '15px' }}>Payment Successful!</h1>
-        <p style={{ color: '#A1A1AA', fontSize: '18px', marginBottom: '30px' }}>Your booking has been confirmed and locked in.</p>
+        <h1 className="text-h2" style={{ marginBottom: '15px' }}>Payment Successful!</h1>
+        <p className="text-body" style={{ color: '#A1A1AA', marginBottom: '30px' }}>Your booking has been confirmed and locked in.</p>
         {loading ? (
           <p style={{ color: '#A1A1AA' }}>Loading booking details...</p>
         ) : booking ? (
@@ -43,9 +43,9 @@ function BookingSuccessContent() {
             <p style={{ margin: '8px 0' }}><span style={{ color: '#A1A1AA', display: 'inline-block', width: '160px' }}>Booking Ref:</span> #{bookingId}</p>
           </div>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <Button variant="ghost" onClick={() => router.push('/vehicles')} style={{ padding: '16px' }}>Browse More</Button>
-          <Button variant="primary" onClick={() => router.push('/booking-history')} style={{ padding: '16px' }}>View My Bookings</Button>
+        <div className="stack-mobile" style={{ gap: '20px' }}>
+          <Button variant="ghost" onClick={() => router.push('/vehicles')} style={{ padding: '16px', width: '100%' }}>Browse More</Button>
+          <Button variant="primary" onClick={() => router.push('/booking-history')} style={{ padding: '16px', width: '100%' }}>View My Bookings</Button>
         </div>
       </div>
     </div>

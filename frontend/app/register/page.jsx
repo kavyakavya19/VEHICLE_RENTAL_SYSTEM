@@ -25,8 +25,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex' }}>
-      <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', paddingTop: '80px' }} className="animate-fade-in">
+    <div className="auth-layout-container">
+      <div className="auth-form-panel animate-fade-in">
         <Card style={{ width: '100%', maxWidth: '400px', background: 'rgba(255,255,255,0.02)' }}>
           <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Create Account</h2>
           <p style={{ color: '#A1A1AA', marginBottom: '32px' }}>Join Perfect Wheels today for exclusive access</p>
@@ -52,12 +52,11 @@ export default function RegisterPage() {
           </div>
         </Card>
       </div>
-      <div style={{ flex: '1', position: 'relative' }} className="auth-image-container">
+      <div className="auth-image-panel">
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("https://images.unsplash.com/photo-1503376712341-ea1d8213bd73?auto=format&fit=crop&q=80")', backgroundSize: 'cover', backgroundPosition: 'center', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to left, transparent, #0A0A0A)' }} />
         </div>
       </div>
-      <style>{`@media (max-width: 767px) { .auth-image-container { display: none; } }`}</style>
     </div>
   );
 }

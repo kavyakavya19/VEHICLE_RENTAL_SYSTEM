@@ -18,22 +18,22 @@ export default function Home() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(239,62,66,0.1)', color: '#EF3E42', padding: '8px 16px', borderRadius: '30px', fontWeight: '600', marginBottom: '24px' }}>
             <Car size={18} /> Premium Vehicle Rentals
           </div>
-          <h1 style={{ fontSize: '4rem', lineHeight: '1.1', marginBottom: '24px', letterSpacing: '-0.03em' }}>
+          <h1 className="text-hero" style={{ marginBottom: '24px' }}>
             Find Your <span style={{ color: '#EF3E42' }}>Perfect Wheels</span> For The Journey
           </h1>
-          <p style={{ fontSize: '1.2rem', color: '#A1A1AA', marginBottom: '40px', lineHeight: '1.6' }}>
+          <p className="text-body" style={{ color: '#A1A1AA', marginBottom: '40px' }}>
             Experience the ultimate freedom of the open road. Browse our premium collection of well-maintained vehicles for rent across the country.
           </p>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <Link href="/vehicles">
+          <div className="stack-mobile">
+            <Link href="/vehicles" style={{ width: '100%' }}>
               <Button variant="primary" style={{ padding: '16px 32px', fontSize: '1.1rem' }}>Browse Vehicles</Button>
             </Link>
             {isAuthenticated ? (
-              <Link href="/dashboard">
+              <Link href="/dashboard" style={{ width: '100%' }}>
                 <Button variant="secondary" style={{ padding: '16px 32px', fontSize: '1.1rem' }}>Go to Dashboard</Button>
               </Link>
             ) : (
-              <Link href="/register">
+              <Link href="/register" style={{ width: '100%' }}>
                 <Button variant="secondary" style={{ padding: '16px 32px', fontSize: '1.1rem' }}>Join Now</Button>
               </Link>
             )}

@@ -24,7 +24,7 @@ export default function StatsGrid({ stats }) {
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+    <div className="grid-responsive grid-responsive-4" style={{ marginBottom: '32px' }}>
       {items.map((item, idx) => (
         <StatCard key={idx} {...item} />
       ))}

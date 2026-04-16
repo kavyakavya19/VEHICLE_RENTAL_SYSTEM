@@ -54,7 +54,7 @@ function AdminEnquiriesContent() {
       <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '10px' }}>Enquiry Management</h1>
       <p style={{ color: '#A1A1AA', marginBottom: '40px' }}>Respond to customer queries and resolve tickets.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedEnquiry ? '1fr 1fr' : '1fr', gap: '30px' }}>
+      <div className={selectedEnquiry ? "grid-responsive grid-responsive-2" : "grid-responsive"} style={{ gap: '30px' }}>
         {/* Enquiries Table */}
         <Card style={{ padding: '0', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>

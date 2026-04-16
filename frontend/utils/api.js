@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/').replace(/\/?$/, '/');
+
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -21,7 +23,7 @@ API.interceptors.response.use(
         const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
         if (!refresh) throw new Error('No refresh token');
         const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/'}users/token/refresh/`,
+          `${BASE_URL}users/token/refresh/`,
           { refresh }
         );
         const newAccess = res.data.access;
