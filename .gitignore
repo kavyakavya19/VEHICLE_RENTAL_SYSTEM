@@ -21,3 +21,6 @@ logs/
 .idea/
 .DS_Store
 *.swp
+
+static/
+staticfiles/
