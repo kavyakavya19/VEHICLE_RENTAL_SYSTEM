@@ -1,7 +1,7 @@
 # Perfect Wheels - Frontend
 
 ## Overview
-This is the front-facing part of the Perfect Wheels vehicle rental platform. It handles everything the user interacts with—from browsing vehicles and completing bookings to managing their wallet balance. I went with a modern, responsive, and dark-themed design to give the platform a premium feel.
+This is the front-facing part of the Perfect Wheels vehicle rental platform. It handles everything the user interacts with—from browsing vehicles and completing bookings to managing their wallet balance. We went with a modern, responsive, and dark-themed design to give the platform a premium feel.
 
 ##  Features
 *   **Vehicle Listing & Filtering**: Users can view the entire fleet and quickly filter by brand.
