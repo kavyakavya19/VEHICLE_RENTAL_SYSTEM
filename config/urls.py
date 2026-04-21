@@ -4,8 +4,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from apps.users.views import GoogleLoginView, ForgotPasswordView, ResetPasswordView
+from apps.payments.views import WithdrawalViewSet
 
 urlpatterns = [
+    path('api/withdrawals/', WithdrawalViewSet.as_view({'post': 'create', 'get': 'list'}), name='wallet-withdraw-top'),
+    path('api/wallet/withdrawals/', WithdrawalViewSet.as_view({'get': 'list'}), name='wallet-withdrawals-history'),
     path('api/auth/google/', GoogleLoginView.as_view(), name='google_login'),
     path('api/auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
     path('api/auth/reset-password/', ResetPasswordView.as_view(), name='reset_password'),

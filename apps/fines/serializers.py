@@ -5,4 +5,4 @@ class FineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fine
         fields = '__all__'
-        read_only_fields = ('booking', 'amount', 'status')
+        read_only_fields = ('created_by', 'is_deducted', 'created_at')

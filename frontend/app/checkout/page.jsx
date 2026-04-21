@@ -15,6 +15,8 @@ function CheckoutContent() {
   const [couponSuccess, setCouponSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [useWallet, setUseWallet] = useState(true);
+  const [breakdown, setBreakdown] = useState(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('bookingDetails');
@@ -27,8 +29,25 @@ function CheckoutContent() {
 
   if (!bookingDetails) return null;
 
-  const { vehicle, start_date, end_date, number_of_days, price_per_day, total_price, vehicle_id } = bookingDetails;
+  const { vehicle, start_date, end_date, booking_type, number_of_days, number_of_hours, price_per_day, price_per_hour, total_price, vehicle_id } = bookingDetails;
   const finalPrice = Math.max(0, total_price - discount);
+  const totalWithDeposit = finalPrice + (bookingDetails.security_deposit || 2000);
+
+  const refundableBal = bookingDetails.refundable_balance || 0;
+  const normalBal = bookingDetails.wallet_balance || 0;
+
+  let walletDeduction = 0;
+  let amountToPay = totalWithDeposit;
+
+  if (useWallet) {
+     const fromRefundable = Math.min(refundableBal, amountToPay);
+     amountToPay -= fromRefundable;
+     
+     const fromNormal = Math.min(normalBal, amountToPay);
+     amountToPay -= fromNormal;
+     
+     walletDeduction = fromRefundable + fromNormal;
+  }
 
   const applyCoupon = async () => {
     if (!couponCode) return;
@@ -46,18 +65,31 @@ function CheckoutContent() {
   const confirmBooking = async () => {
     setLoading(true); setBookingError('');
     try {
-      const totalWithDeposit = finalPrice + (bookingDetails.security_deposit || 2000);
       const res = await API.post('bookings/', {
         vehicle: vehicle_id, start_date, end_date,
+        booking_type,
         total_price: totalWithDeposit,
         coupon_code: discount > 0 ? couponCode : null,
         status: 'PENDING',
       });
       
-      // Case 1: Booking created successfully (201)
-      // Case 2: Pending booking exists for same vehicle (200)
+      const orderRes = await API.post('payments/create-order/', { 
+        booking_id: res.data.id, 
+        use_wallet: useWallet 
+      });
+      
+      if (orderRes.data.status === 'SUCCESS_WALLET') {
+        router.push(`/booking-success/${res.data.id}`);
+        return;
+      }
+      
+      if (orderRes.data.breakdown) {
+          setBreakdown(orderRes.data.breakdown);
+      }
+      
       const bId = res.data.id || res.data.blockchain_id || res.data.booking_id;
-      sessionStorage.setItem('paymentAmount', String(totalWithDeposit));
+      sessionStorage.setItem('paymentAmount', String(amountToPay));
+      sessionStorage.setItem('useWallet', String(useWallet));
       router.push(`/payment/${bId}`);
     } catch (err) {
       const resp = err.response?.data;
@@ -101,17 +133,34 @@ function CheckoutContent() {
               <span style={{ color: '#EF3E42', fontWeight: 'bold' }}>{vehicle?.brand}</span>
               <h3 style={{ fontSize: '20px', marginTop: '5px' }}>{vehicle?.name}</h3>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>Start Date:</span><span>{start_date}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}><span style={{ color: '#A1A1AA' }}>End Date:</span><span>{end_date}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>{booking_type === 'HOURLY' ? 'Start Time:' : 'Start Date:'}</span><span>{booking_type === 'HOURLY' ? new Date(start_date).toLocaleString() : start_date}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}><span style={{ color: '#A1A1AA' }}>{booking_type === 'HOURLY' ? 'End Time:' : 'End Date:'}</span><span>{booking_type === 'HOURLY' ? new Date(end_date).toLocaleString() : end_date}</span></div>
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '20px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>Rate:</span><span>₹{price_per_day} / day</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>Duration:</span><span>{number_of_days} days</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>Rate:</span><span>₹{booking_type === 'HOURLY' ? price_per_hour : price_per_day} / {booking_type === 'HOURLY' ? 'hour' : 'day'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ color: '#A1A1AA' }}>Security Deposit:</span><span>₹{bookingDetails.security_deposit || 2000}</span></div>
+            
+            {breakdown && breakdown.deposit && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', marginBottom: '10px', fontSize: '13px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#52525B' }}>• From Refundable</span><span style={{ color: '#10B981' }}>-₹{breakdown.deposit.from_refundable}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#52525B' }}>• From Balance</span><span style={{ color: '#10B981' }}>-₹{breakdown.deposit.from_balance}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#52525B' }}>• External Pay</span><span style={{ color: '#EF3E42' }}>₹{breakdown.deposit.external}</span></div>
+                </div>
+            )}
+
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '15px 0' }} />
             
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ color: '#A1A1AA' }}>Rental Cost:</span>
-              <span>₹{total_price}</span>
+              <span style={{ color: '#A1A1AA' }}>Rental Amount:</span>
+              <span>₹{finalPrice}</span>
             </div>
+
+            {breakdown && breakdown.rental && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', marginBottom: '10px', fontSize: '13px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#52525B' }}>• From Refundable</span><span style={{ color: '#10B981' }}>-₹{breakdown.rental.from_refundable}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#52525B' }}>• From Balance</span><span style={{ color: '#10B981' }}>-₹{breakdown.rental.from_balance}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#52525B' }}>• External Pay</span><span style={{ color: '#EF3E42' }}>₹{breakdown.rental.external}</span></div>
+                </div>
+            )}
             {discount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#10B981' }}>
                 <span>Discount ({couponCode}):</span>
@@ -124,9 +173,38 @@ function CheckoutContent() {
             </div>
 
             <hr style={{ border: 'none', borderTop: '1px dashed rgba(255,255,255,0.2)', margin: '20px 0' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 'bold', marginBottom: (refundableBal > 0 || normalBal > 0) ? '10px' : '0' }}>
+              <span>Total Cost:</span>
+              <span>₹{totalWithDeposit}</span>
+            </div>
+
+            {(refundableBal > 0 || normalBal > 0) && (
+              <div style={{ background: 'rgba(16,185,129,0.08)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)', marginBottom: '16px' }}>
+                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px', fontWeight: '600' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={useWallet} 
+                      onChange={(e) => setUseWallet(e.target.checked)} 
+                      style={{ width: '18px', height: '18px', accentColor: '#10B981' }} 
+                    />
+                    Apply Wallet Balance
+                 </label>
+                 <div style={{ marginLeft: '28px', marginTop: '10px', fontSize: '14px', color: '#A1A1AA' }}>
+                    Available: ₹{refundableBal + normalBal} (Refundable: ₹{refundableBal}, Top-up: ₹{normalBal})
+                 </div>
+                 {useWallet && walletDeduction > 0 && (
+                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed rgba(16,185,129,0.3)', color: '#10B981', fontWeight: '600' }}>
+                     <span>Wallet Applied:</span>
+                     <span>- ₹{walletDeduction}</span>
+                   </div>
+                 )}
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 'bold' }}>
-              <span>Total Payable:</span>
-              <span style={{ color: '#EF3E42' }}>₹{finalPrice + (bookingDetails.security_deposit || 2000)}</span>
+              <span>Pay Now:</span>
+              <span style={{ color: '#EF3E42' }}>₹{amountToPay}</span>
             </div>
           </div>
           {/* Actions */}
@@ -141,7 +219,7 @@ function CheckoutContent() {
               {couponSuccess && <p style={{ color: '#10B981', fontSize: '13px', marginTop: '8px' }}>{couponSuccess}</p>}
             </div>
             <Button variant="primary" style={{ width: '100%', padding: '16px', fontSize: '18px', fontWeight: '600' }} onClick={confirmBooking} disabled={loading}>
-              {loading ? 'Processing...' : 'Confirm Booking'}
+              {loading ? 'Processing...' : 'Proceed to Payment'}
             </Button>
             <Button variant="ghost" style={{ width: '100%', padding: '16px', fontSize: '16px', marginTop: '10px', color: '#A1A1AA' }} onClick={() => router.back()}>Cancel</Button>
           </div>

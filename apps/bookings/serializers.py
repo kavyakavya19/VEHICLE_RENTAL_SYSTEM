@@ -3,6 +3,7 @@ from .models import Booking
 from apps.vehicles.serializers import VehicleSerializer
 from apps.users.serializers import UserSerializer
 from apps.coupons.serializers import CouponSerializer
+from apps.coupons.models import Coupon
 
 
 class BookingReadSerializer(serializers.ModelSerializer):
@@ -20,7 +21,7 @@ class BookingWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ('vehicle', 'coupon_code', 'start_date', 'end_date')
+        fields = ('vehicle', 'coupon_code', 'start_date', 'end_date', 'booking_type')
 
     def validate(self, data):
         if data.get('start_date') and data.get('end_date') and data['start_date'] >= data['end_date']:
@@ -29,7 +30,6 @@ class BookingWriteSerializer(serializers.ModelSerializer):
         coupon_code = data.pop('coupon_code', None)
         data['coupon'] = None
         if coupon_code:
-            from apps.coupons.models import Coupon
             try:
                 data['coupon'] = Coupon.objects.get(code=coupon_code, is_active=True)
             except Coupon.DoesNotExist:
@@ -49,7 +49,7 @@ class MyBookingSerializer(serializers.ModelSerializer):
     vehicle        = serializers.CharField(source='vehicle.name', read_only=True)
     status         = serializers.CharField(source='booking_status', read_only=True)
 
-    # ── Payment fields — nested from the related Payment record ──────────
+    # ── Payment fields — nested from the related Payment record 
     payment_status    = serializers.SerializerMethodField()
     payment_id        = serializers.SerializerMethodField()
     payment_amount    = serializers.SerializerMethodField()
@@ -59,16 +59,21 @@ class MyBookingSerializer(serializers.ModelSerializer):
         model  = Booking
         fields = (
             'id', 'vehicle', 'vehicle_name', 'vehicle_brand',
-            'start_date', 'end_date', 'total_price',
-            'booking_status', 'status',
+            'start_date', 'end_date', 'booking_type',
+            'total_price', 'booking_status', 'status',
             # payment fields
             'payment_status', 'payment_id', 'payment_amount', 'razorpay_order_id',
             # late return & refund fields
-            'actual_return_date', 'late_days', 'fine_amount', 'fine_paid',
+            'actual_return_time', 'late_days', 'fine_amount', 'fine_paid',
             'rental_amount', 'security_deposit', 'damage_charge', 'refund_amount',
             'deposit_paid', 'deposit_refunded',
-            'created_at',
+            'created_at', 'has_review',
         )
+
+    has_review = serializers.SerializerMethodField()
+
+    def get_has_review(self, obj):
+        return hasattr(obj, 'review')
 
     def get_payment_status(self, obj):
         """Returns payment status: PENDING / SUCCESS / FAILED — or None if no payment record."""

@@ -7,8 +7,8 @@ from core.permissions import IsAdminUserOrReadOnly
 class VehicleViewSet(viewsets.ModelViewSet):
     serializer_class = VehicleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
-    filterset_fields = ['type', 'brand', 'availability_status', 'maintenance_status']
-    search_fields = ['name', 'brand']
+    filterset_fields = ['type', 'brand__name', 'availability_status', 'maintenance_status', 'is_available']
+    search_fields = ['name', 'brand__name']
     ordering_fields = ['price_per_day', 'created_at']
 
     def get_queryset(self):

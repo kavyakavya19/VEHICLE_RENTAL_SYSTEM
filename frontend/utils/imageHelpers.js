@@ -1,5 +1,12 @@
 export const getVehicleImage = (vehicle) => {
-  if (vehicle && vehicle.image) return vehicle.image;
+  if (vehicle && vehicle.image) {
+    // Handle relative URLs from Django media
+    if (vehicle.image.startsWith('/') && !vehicle.image.startsWith('http')) {
+      const BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/').replace('api/', '');
+      return `${BASE.replace(/\/$/, '')}${vehicle.image}`;
+    }
+    return vehicle.image;
+  }
 
   const type = (vehicle?.vehicle_type || vehicle?.type || '').toUpperCase();
   const name = (vehicle?.name || '').toUpperCase();

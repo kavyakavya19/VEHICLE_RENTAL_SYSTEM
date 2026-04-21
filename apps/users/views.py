@@ -208,7 +208,6 @@ class ForgotPasswordView(APIView):
             token = default_token_generator.make_token(user)
             
             # The URL will be in Next.js
-            # e.g. http://localhost:3000/reset-password/<uid>/<token>
             frontend_url = os.getenv('NEXT_PUBLIC_FRONTEND_URL', 'http://localhost:3000')
             reset_link = f"{frontend_url}/reset-password/{uid}/{token}"
 

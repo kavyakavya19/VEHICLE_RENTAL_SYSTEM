@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import API from '../../utils/api';
+import { 
+  CheckCircle2, XCircle, Clock, Info, 
+  MapPin, Calendar, Tag, CreditCard, Play, StopCircle 
+} from 'lucide-react';
+import { dashboardService } from '../../services/dashboardService';
 import { Button } from '../../components/Button';
 import StatsGrid from './components/StatsGrid';
 import WalletDetailedCard from './components/WalletDetailedCard';
@@ -10,26 +14,29 @@ import ActiveBookingCard from './components/ActiveBookingCard';
 import ProgressTracker from './components/ProgressTracker';
 import DashboardAlerts from './components/DashboardAlerts';
 import QuickActions from './components/QuickActions';
+import WithdrawalHistory from './components/WithdrawalHistory';
+import FinesHistory from './components/FinesHistory';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 function DashboardContent() {
   const router = useRouter();
-  const [data, setData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const [verificationData, setVerificationData] = useState(null);
+  const [historyRefresh, setHistoryRefresh] = useState(0);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [res, verifyRes] = await Promise.all([
-        API.get('bookings/summary/'),
-        API.get('users/verification-status/').catch(() => ({ data: null }))
+      const [summaryResponse, verificationResponse] = await Promise.all([
+        dashboardService.getSummary(),
+        dashboardService.getVerificationStatus()
       ]);
-      setData(res.data);
-      if (verifyRes.data) {
-        setVerificationData(verifyRes.data);
+      setDashboardData(summaryResponse);
+      if (verificationResponse) {
+        setVerificationData(verificationResponse);
       }
     } catch (err) {
       setError('Could not load dashboard data. Please refresh.');
@@ -46,7 +53,7 @@ function DashboardContent() {
   const handleBookingAction = async (bookingId, action) => {
     setActionLoading(true);
     try {
-      await API.post(`bookings/${bookingId}/${action}/`);
+      await dashboardService.performBookingAction(bookingId, action);
       fetchDashboardData();
     } catch (err) {
       alert(err.response?.data?.error || 'Action failed');
@@ -74,8 +81,14 @@ function DashboardContent() {
     );
   }
 
-  const { wallet, stats, active_booking, alerts } = data;
+  const { wallet, stats, active_booking, alerts } = dashboardData;
   const hasPending = active_booking?.booking_status === 'PENDING';
+
+  const getStatusIcon = (status) => {
+    if (status === 'APPROVED') return <CheckCircle2 size={24} color="#10B981" />;
+    if (status === 'REJECTED') return <XCircle size={24} color="#EF4444" />;
+    return <Clock size={24} color="#F59E0B" />;
+  };
 
   return (
     <div className="page-container animate-fade-in" style={{ paddingTop: '120px', paddingBottom: '60px' }}>
@@ -95,9 +108,9 @@ function DashboardContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ 
               background: verificationData.status === 'APPROVED' ? '#10B98115' : verificationData.status === 'REJECTED' ? '#EF444415' : '#F59E0B15',
-              padding: '12px', borderRadius: '12px'
+              padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-               {verificationData.status === 'APPROVED' ? '✅' : verificationData.status === 'REJECTED' ? '❌' : '⏳'}
+               {getStatusIcon(verificationData.status)}
             </div>
             <div>
               <h3 style={{ fontSize: '18px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -131,7 +144,7 @@ function DashboardContent() {
       <StatsGrid stats={stats} />
 
       <div className="grid-responsive grid-sidebar-layout" style={{ alignItems: 'start' }}>
-        <div style={{ display: 'grid', gap: '24px' }}>
+        <div style={{ display: 'grid', gap: '32px' }}>
           <ActiveBookingCard 
             booking={active_booking} 
             onAction={handleBookingAction} 
@@ -144,16 +157,22 @@ function DashboardContent() {
           )}
 
           {!active_booking && stats.total === 0 && (
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '24px', padding: '60px', textAlign: 'center' }}>
-              <p style={{ color: '#52525B', fontSize: '18px' }}>You have no bookings yet. Explore our premium fleet and start your journey.</p>
-              <Button variant="primary" onClick={() => router.push('/vehicles')} style={{ marginTop: '24px' }}>Browse Vehicles</Button>
+            <div className="glass-card" style={{ padding: '80px 40px', textAlign: 'center', borderStyle: 'shadow' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '18px', fontWeight: '500' }}>No adventures yet? Explore our premium fleet and start your journey.</p>
+              <Button variant="primary" onClick={() => router.push('/vehicles')} style={{ marginTop: '32px', padding: '16px 40px', borderRadius: '16px', fontWeight: '800' }}>Browse Vehicles</Button>
             </div>
           )}
+          <QuickActions hasPending={hasPending} />
         </div>
 
-        <div style={{ display: 'grid', gap: '24px' }}>
-          <WalletDetailedCard wallet={wallet} />
-          <QuickActions hasPending={hasPending} />
+        <div style={{ display: 'grid', gap: '32px' }}>
+          <WalletDetailedCard 
+            wallet={wallet} 
+            onUpdate={fetchDashboardData} 
+            onWithdrawalSuccess={() => setHistoryRefresh(prev => prev + 1)}
+          />
+          <WithdrawalHistory refreshTrigger={historyRefresh} />
+          <FinesHistory />
         </div>
       </div>
 

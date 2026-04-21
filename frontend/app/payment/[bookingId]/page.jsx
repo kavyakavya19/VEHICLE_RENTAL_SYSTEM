@@ -49,10 +49,25 @@ function PaymentContent() {
 
   const handlePayment = async () => {
     setLoading(true); setError('');
-    const scriptLoaded = await loadRazorpayScript();
-    if (!scriptLoaded) { setError('Failed to load Razorpay SDK.'); setLoading(false); return; }
     try {
-      const orderRes = await API.post('payments/create-order/', { booking_id: parseInt(bookingId, 10) });
+      const useWalletStr = sessionStorage.getItem('useWallet');
+      const useWallet = useWalletStr ? useWalletStr === 'true' : true;
+
+      const orderRes = await API.post('payments/create-order/', { 
+         booking_id: parseInt(bookingId, 10),
+         use_wallet: useWallet
+      });
+
+      if (orderRes.data.status === 'SUCCESS_WALLET') {
+          sessionStorage.removeItem('paymentAmount');
+          sessionStorage.removeItem('useWallet');
+          router.replace(`/booking-success/${bookingId}`);
+          return;
+      }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) { setError('Failed to load Razorpay SDK.'); setLoading(false); return; }
+
       const { order_id, amount, currency, razorpay_key } = orderRes.data;
       let paymentActioned = false;
       const options = {
@@ -69,6 +84,7 @@ function PaymentContent() {
             });
             if (verifyRes.data.status === 'SUCCESS') {
               sessionStorage.removeItem('paymentAmount');
+              sessionStorage.removeItem('useWallet');
               router.replace(`/booking-success/${bookingId}`);
             } else {
               setError('Verification failed. Contact support.'); setLoading(false);

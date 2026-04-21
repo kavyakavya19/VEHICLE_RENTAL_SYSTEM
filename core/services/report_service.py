@@ -13,12 +13,12 @@ class ReportService:
         total_users = User.objects.filter(role='USER').count()
         total_vehicles = Vehicle.objects.count()
         total_bookings = Booking.objects.count()
-        active_bookings = Booking.objects.filter(booking_status__in=['PENDING', 'CONFIRMED']).count()
-        completed_bookings = Booking.objects.filter(booking_status='COMPLETED').count()
+        active_bookings = Booking.objects.filter(booking_status__in=['PENDING', 'CONFIRMED', 'ONGOING', 'PENDING_APPROVAL']).count()
+        completed_bookings = Booking.objects.filter(booking_status__in=['COMPLETED', 'REFUNDED']).count()
         cancelled_bookings = Booking.objects.filter(booking_status='CANCELLED').count()
         
-        total_revenue = Payment.objects.filter(payment_status='COMPLETED').aggregate(total=Sum('amount'))['total'] or 0
-        total_fines = Fine.objects.filter(status='PAID').aggregate(total=Sum('amount'))['total'] or 0
+        total_revenue = Payment.objects.filter(payment_status='SUCCESS').aggregate(total=Sum('amount'))['total'] or 0
+        total_fines = Fine.objects.filter(is_settled=True).aggregate(total=Sum('amount'))['total'] or 0
         
         total_reviews = Review.objects.count()
         average_rating = Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0
@@ -42,7 +42,7 @@ class ReportService:
 
     @staticmethod
     def get_monthly_revenue():
-        monthly_data = Payment.objects.filter(payment_status='COMPLETED') \
+        monthly_data = Payment.objects.filter(payment_status='SUCCESS') \
             .annotate(month=TruncMonth('created_at')) \
             .values('month') \
             .annotate(revenue=Sum('amount')) \

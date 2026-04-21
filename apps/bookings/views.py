@@ -1,16 +1,32 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Booking
-from .serializers import BookingReadSerializer, BookingWriteSerializer
+from .serializers import BookingReadSerializer, BookingWriteSerializer, MyBookingSerializer
 from core.services.booking_service import BookingService
 from core.permissions import IsAdminUserRole
 from core.utils.pdf_generator import InvoiceGenerator
 from django.http import FileResponse
-from apps.payments.models import Wallet, WalletTransaction
 from django.db import transaction
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+
+from apps.payments.models import Wallet, WalletTransaction
+from apps.vehicles.models import Vehicle
+from apps.fines.services import process_all_pending_fines
+from core.services.payment_service import PaymentService
+
 from decimal import Decimal
 import os
+import logging
+
+try:
+    from datetime import datetime
+except ImportError:
+    pass
+
+logger = logging.getLogger(__name__)
 
 class BookingViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
@@ -40,6 +56,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         vehicle = serializer.validated_data['vehicle']
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
+        booking_type = serializer.validated_data.get('booking_type', 'DAILY')
         coupon = serializer.validated_data.get('coupon')
         
         try:
@@ -48,6 +65,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 vehicle=vehicle,
                 start_date=start_date,
                 end_date=end_date,
+                booking_type=booking_type,
                 coupon=coupon
             )
         except ValidationError as e:
@@ -64,7 +82,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='my-bookings')
     def my_bookings(self, request):
-        from .serializers import MyBookingSerializer
         bookings = (
             Booking.objects
             .select_related('vehicle', 'payment')   # join payment in single query
@@ -80,9 +97,6 @@ class BookingViewSet(viewsets.ModelViewSet):
         Consolidated dashboard summary: Wallet, Stats, Active Booking, and Alerts.
         """
         user = request.user
-        from core.services.payment_service import PaymentService
-        from .serializers import MyBookingSerializer
-        
         # 1. Wallet
         wallet_data = PaymentService.get_wallet_details(user)
         
@@ -150,7 +164,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='start-trip',
             permission_classes=[permissions.IsAuthenticated])
     def start_trip(self, request, pk=None):
-        from datetime import date
         booking = self.get_object()
 
         # ── Ownership / admin check 
@@ -184,10 +197,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             )
 
         # ── Date guard — cannot start before booking start_date 
-        today = date.today()
-        if today < booking.start_date:
+        from django.utils import timezone
+        now = timezone.now()
+        if now.date() < booking.start_date.date():
             return Response(
-                {'error': f'Trip cannot start before the booking date ({booking.start_date}).'},
+                {'error': f'Trip cannot start before the booking date ({booking.start_date.date()}).'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -210,7 +224,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='end-trip',
             permission_classes=[permissions.IsAuthenticated])
     def end_trip(self, request, pk=None):
-        from datetime import date
+        from django.utils import timezone
         booking = self.get_object()
 
         # ── Ownership / admin check 
@@ -232,42 +246,50 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        today  = date.today()
+        now = timezone.now()
         vehicle = booking.vehicle
 
         # ── Late return detection 
-        booking.actual_return_date = today
+        booking.actual_return_time = now
 
-        if today > booking.end_date:
+        fine_data = BookingService.calculate_fine(vehicle, booking.end_date, now)
+
+        if fine_data['fine_amount'] > 0:
             # ── LATE RETURN 
-            late_days   = (today - booking.end_date).days
-            fine_amount = late_days * float(vehicle.late_fee_per_day)
-
-            booking.late_days          = late_days
-            booking.fine_amount        = round(fine_amount, 2)
+            booking.late_days          = fine_data['extra_hours']
+            booking.fine_amount        = fine_data['fine_amount']
             booking.fine_paid          = False
             booking.booking_status     = 'PENDING_APPROVAL'
             booking.save()
 
             return Response({
                 'status':       'PENDING_APPROVAL',
-                'message':      f'Vehicle returned {late_days} day(s) late. A fine of ₹{fine_amount:.2f} has been raised. Please await admin approval.',
+                'message':      f"Vehicle returned {fine_data['extra_hours']} hour(s) late. A fine of ₹{fine_data['fine_amount']:.2f} has been raised. Please await admin approval.",
                 'booking_id':   booking.id,
-                'late_days':    late_days,
-                'fine_amount':  round(fine_amount, 2),
-                'per_day_rate': float(vehicle.late_fee_per_day),
+                'late_days':    fine_data['extra_hours'],
+                'fine_amount':  fine_data['fine_amount'],
+                'per_hour_rate': fine_data['fine_per_hour'],
                 'end_date':     str(booking.end_date),
-                'return_date':  str(today),
+                'return_date':  str(now),
             }, status=status.HTTP_200_OK)
 
         else:
             # ── ON TIME RETURN
-            booking.booking_status = 'COMPLETED'
-            booking.save()
+            with transaction.atomic():
+                booking.booking_status = 'COMPLETED'
+                booking.save()
 
-            # Restore vehicle availability
-            vehicle.availability_status = True
-            vehicle.save(update_fields=['availability_status'])
+                # Release security deposit (On-time = No fines)
+                BookingService.release_security_deposit(booking)
+
+                # Restore vehicle availability
+                vehicle.availability_status = True
+                vehicle.save(update_fields=['availability_status'])
+
+            try:
+                process_all_pending_fines(booking.user)
+            except Exception as e:
+                logger.error(f"Failed to process pending fines: {e}")
 
             return Response({
                 'status':     'COMPLETED',
@@ -323,42 +345,33 @@ class BookingViewSet(viewsets.ModelViewSet):
         fine_amount   = float(request.data.get('fine_amount', booking.fine_amount))
         damage_charge = float(request.data.get('damage_charge', 0))
         
-        deposit = float(booking.security_deposit)
+        # ── Deposit Adjustment Logic
+        total_to_deduct = Decimal(str(fine_amount)) + Decimal(str(damage_charge))
+        deposit         = Decimal(str(booking.security_deposit))
+        refund_amount   = float(max(Decimal('0'), deposit - total_to_deduct))
         
-        # refund = deposit - fine - damage (min 0)
-        refund_amount = max(0.0, deposit - fine_amount - damage_charge)
-
         with transaction.atomic():
-            booking.fine_amount   = fine_amount
-            booking.damage_charge = damage_charge
-            booking.refund_amount = refund_amount
-            booking.fine_paid     = True # Absorbed from deposit
-            booking.booking_status = 'REFUNDED'
-            booking.deposit_refunded = True
+            booking.fine_amount   = Decimal(str(fine_amount))
+            booking.damage_charge = Decimal(str(damage_charge))
+            booking.booking_status = 'COMPLETED'
             booking.save()
+
+            # Release security deposit using centralized logic
+            BookingService.release_security_deposit(booking)
 
             # Restore vehicle availability if not already done
             vehicle = booking.vehicle
             vehicle.availability_status = True
             vehicle.save(update_fields=['availability_status'])
 
-            # Update User Wallet
-            wallet, _ = Wallet.objects.get_or_create(user=booking.user)
-            wallet.balance += Decimal(str(refund_amount))
-            wallet.save()
-
-            # Create Transaction Record
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                booking=booking,
-                amount=refund_amount,
-                tx_type='REFUND',
-                message=f"Security deposit refund for booking #{booking.id}. (Deposit: {deposit}, Fine: {fine_amount}, Damage: {damage_charge})"
-            )
+        try:
+            process_all_pending_fines(booking.user)
+        except Exception as e:
+            logger.error(f"Failed to process pending fines: {e}")
 
         return Response({
             'status': 'REFUNDED',
-            'message': f'Trip finalized. Refund of ₹{refund_amount} credited to wallet.',
+            'message': f'Trip finalized. Refund of ₹{refund_amount} credited to refundable balance.',
             'refund_amount': refund_amount,
             'booking_id': booking.id
         }, status=status.HTTP_200_OK)
@@ -367,13 +380,12 @@ class BookingViewSet(viewsets.ModelViewSet):
     # PAY FINE  (User)  —  User pays the late return fine
     # POST /api/bookings/{id}/pay-fine/
     # After payment:  fine_paid=True, booking → COMPLETED, vehicle → available
-    # NOTE: In production, integrate Razorpay here; for now we mark it directly.
     @action(detail=True, methods=['post'], url_path='pay-fine',
             permission_classes=[permissions.IsAuthenticated])
     def pay_fine(self, request, pk=None):
         booking = self.get_object()
 
-        # ── Ownership check
+        #  Ownership check
         is_admin = getattr(request.user, 'role', '') == 'ADMIN'
         if request.user != booking.user and not is_admin:
             return Response(
@@ -396,10 +408,18 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking.booking_status = 'COMPLETED'
             booking.save()
 
+            # Release security deposit (after fine is paid)
+            BookingService.release_security_deposit(booking)
+
             # Restore vehicle availability
             vehicle = booking.vehicle
             vehicle.availability_status = True
             vehicle.save(update_fields=['availability_status'])
+
+        try:
+            process_all_pending_fines(booking.user)
+        except Exception as e:
+            logger.error(f"Failed to process pending fines: {e}")
 
         return Response({
             'status':     'COMPLETED',
@@ -422,20 +442,20 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # ── Ensure booking is paid/confirmed/completed ─────────────────
+        # Ensure booking is paid/confirmed/completed
         if booking.booking_status in ['PENDING', 'CANCELLED']:
              return Response(
                 {'error': 'Invoice is not available for bookings that are cancelled or pending payment.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ── Cache check: If file already exists, don't re-generate ─────
+        # Cache check: If file already exists, don't re-generate
         if booking.invoice_file:
             # Check if file actually exists on filesystem
             if os.path.exists(booking.invoice_file.path):
                 return FileResponse(open(booking.invoice_file.path, 'rb'), content_type='application/pdf')
 
-        # ── Generate PDF 
+        # Generate PDF 
         try:
             relative_path = InvoiceGenerator.generate_invoice_pdf(booking)
             booking.invoice_file = relative_path
@@ -458,21 +478,23 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'needs_verification': True
             }, status=status.HTTP_200_OK)
 
-        from datetime import datetime, date as date_type
+        from django.utils import timezone
+        from django.utils.dateparse import parse_datetime
         from apps.vehicles.models import Vehicle
 
         vehicle_id = request.data.get('vehicle_id')
         start_date = request.data.get('start_date')
         end_date   = request.data.get('end_date')
+        booking_type = request.data.get('booking_type', 'DAILY')
 
-        # ── 1. Presence check 
+        #  1. Presence check 
         if not all([vehicle_id is not None and vehicle_id != '', start_date, end_date]):
             return Response(
                 {'error': 'vehicle_id, start_date, and end_date are required', 'received': request.data},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ── 2. Cast vehicle_id to int
+        #  2. Cast vehicle_id to int
         try:
             vehicle_id = int(vehicle_id)
         except (ValueError, TypeError):
@@ -481,20 +503,33 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ── 3. Parse & validate dates
+        # 3. Parse & validate dates
         try:
             if isinstance(start_date, str):
-                start_date = datetime.strptime(start_date[:10], '%Y-%m-%d').date()
+                start_date = parse_datetime(start_date)
+                if start_date and timezone.is_naive(start_date):
+                    start_date = timezone.make_aware(start_date)
             if isinstance(end_date, str):
-                end_date = datetime.strptime(end_date[:10], '%Y-%m-%d').date()
-        except ValueError:
+                end_date = parse_datetime(end_date)
+                if end_date and timezone.is_naive(end_date):
+                    end_date = timezone.make_aware(end_date)
+            
+            if not start_date or not end_date:
+                # Fallback to date parsing for DAILY if ISO datetime failed
+                from datetime import datetime
+                try:
+                    start_date = timezone.make_aware(datetime.strptime(request.data.get('start_date')[:10], '%Y-%m-%d'))
+                    end_date = timezone.make_aware(datetime.strptime(request.data.get('end_date')[:10], '%Y-%m-%d'))
+                except:
+                    raise ValueError("Invalid date format")
+        except Exception:
             return Response(
-                {'error': 'Dates must be in YYYY-MM-DD format (e.g. 2026-04-24)'},
+                {'error': 'Dates must be valid ISO format strings (YYYY-MM-DD or YYYY-MM-DDTHH:MM)'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        today = date_type.today()
-        if start_date < today:
+        now = timezone.now()
+        if start_date < now:
             return Response(
                 {'error': 'start_date cannot be in the past'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -505,7 +540,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ── 4. Fetch vehicle 
+        #  4. Fetch vehicle 
         try:
             vehicle = Vehicle.objects.get(id=vehicle_id)
         except Vehicle.DoesNotExist:
@@ -514,8 +549,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # ── 4b. Check vehicle operational status ───────────────────────
-        # Even if a user navigates directly by URL, we block booking here.
+        # ── 4b. Check vehicle operational status
         if vehicle.maintenance_status:
             return Response({
                 'available': False,
@@ -528,52 +562,57 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'message': 'This vehicle is not currently available for booking.',
             }, status=status.HTTP_200_OK)
 
-        # ── 4c. Check for unpaid fines ─
+        #  4c. Check for unpaid fines
         if BookingService.check_unpaid_fines(request.user):
              return Response({
                 'available': False,
                 'message': 'You have unpaid fines. Please clear your fine from Booking History before making a new booking.',
-                'block_booking': True  # Add flag for frontend detection
+                'block_booking': True
             }, status=status.HTTP_200_OK)
 
-
-        # ── 5. Overlap check (PENDING + CONFIRMED only, not CANCELLED) ─
-        #
-        #   A booking overlaps when:
-        #     new_start_date <= existing_end_date  AND
-        #     new_end_date   >= existing_start_date
-        
+        #  5. Overlap check (Strict inequality for datetime precision)
         has_conflict = Booking.objects.filter(
             vehicle=vehicle,
             booking_status__in=['PENDING', 'CONFIRMED', 'ONGOING', 'PENDING_APPROVAL'],
-            start_date__lte=end_date,
-            end_date__gte=start_date,
+            start_date__lt=end_date,
+            end_date__gt=start_date,
         ).exists()
 
         if has_conflict:
             return Response({
                 'available': False,
-                'message': 'Vehicle is already booked for the selected dates. Please choose different dates.',
+                'message': 'Vehicle is already booked for the selected dates/times. Please choose a different slot.',
             }, status=status.HTTP_200_OK)
 
-        # ── 6. Vehicle is available — return pricing ───────────────────
-        days          = (end_date - start_date).days  # exact days
-        price_per_day = float(vehicle.price_per_day)
-        subtotal      = round(price_per_day * days, 2)
-        tax           = 0                              # extend here if you add GST later
-        total         = round(subtotal + tax, 2)
+        # 6. Vehicle is available — return pricing
+        try:
+            pricing = BookingService.calculate_price(vehicle, start_date, end_date, booking_type)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({
+        #  7. Get user's wallet balances
+        from apps.payments.models import Wallet
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        
+        res_data = {
             'available':     True,
             'vehicle_id':    vehicle.id,
             'vehicle_name':  f'{vehicle.brand} {vehicle.name}',
-            'price_per_day': price_per_day,
-            'days':          days,
-            'subtotal':      subtotal,
-            'tax':           tax,
-            'total':         total,
+            'price_per_day': pricing['price_per_day'],
+            'days':          pricing['days'],
+            'subtotal':      pricing['subtotal'],
+            'tax':           pricing['tax'],
+            'total':         pricing['total'],
             'security_deposit': float(vehicle.security_deposit),
             'start_date':    str(start_date),
             'end_date':      str(end_date),
-        }, status=status.HTTP_200_OK)
+            'wallet_balance': float(wallet.balance),
+            'refundable_balance': float(wallet.refundable_balance),
+        }
+        
+        if booking_type == 'HOURLY':
+            res_data['hours'] = pricing.get('hours')
+            res_data['price_per_hour'] = pricing.get('price_per_hour')
+
+        return Response(res_data, status=status.HTTP_200_OK)
 

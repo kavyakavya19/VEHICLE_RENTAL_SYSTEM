@@ -1,7 +1,4 @@
-"""
-Global constant definitions and standard schema choices 
-for the Vehicle Rental System database structures.
-"""
+
 
 BOOKING_STATUS_CHOICES = (
     ('PENDING',   'Pending'),
