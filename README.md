@@ -1,6 +1,6 @@
 # Perfect Wheels 
 
-Welcome to **Perfect Wheels**, a complete full-stack vehicle rental platform. I built this project to solve common pain points in vehicle rentals—specifically around managing security deposits, handling late returns, and providing a clean, modern user experience.
+Welcome to **Perfect Wheels**, a complete full-stack vehicle rental platform.  This project is designed to solve common  problems in vehicle rentals—specifically around managing security deposits, handling late returns, and providing a clean, modern user experience.
 
 ## Overview
 Perfect Wheels allows users to browse a fleet of vehicles, view detailed specifications, and book them on a daily or hourly basis. Behind the scenes, it uses a custom wallet system to handle security deposits securely. If there are any late returns or damages, fines are automatically calculated and deducted before the deposit is refunded.
