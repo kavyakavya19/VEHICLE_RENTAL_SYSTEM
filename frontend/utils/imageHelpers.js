@@ -1,10 +1,6 @@
 export const getVehicleImage = (vehicle) => {
   if (vehicle && vehicle.image) {
-    // Handle relative URLs from Django media
-    if (vehicle.image.startsWith('/') && !vehicle.image.startsWith('http')) {
-      const BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/').replace('api/', '');
-      return `${BASE.replace(/\/$/, '')}${vehicle.image}`;
-    }
+    // Cloudinary returns the full absolute URL, so we can use it directly
     return vehicle.image;
   }
 

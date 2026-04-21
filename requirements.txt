@@ -15,3 +15,5 @@ dj-database-url
 gunicorn
 whitenoise
 django-jazzmin
+cloudinary
+django-cloudinary-storage

@@ -112,6 +112,7 @@ export default function VehicleDetailPage() {
           <img
             src={getVehicleImage(vehicle) || '/placeholder-car.png'}
             alt={vehicle.name}
+            loading="lazy"
             style={{
               width: '100%',
               height: '100%',
