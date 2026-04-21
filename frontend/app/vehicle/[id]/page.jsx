@@ -75,7 +75,7 @@ export default function VehicleDetailPage() {
   ];
 
   return (
-    <div className="page-container animate-fade-in" style={{ paddingTop: '120px' }}>
+    <div className="page-container animate-fade-in overflow-x-hidden" style={{ paddingTop: '120px' }}>
       {/* Back Button */}
       <Button
         variant="ghost"
@@ -87,7 +87,7 @@ export default function VehicleDetailPage() {
 
       {/* Main Card: Image Left + Details Right */}
       <div
-        className="grid-responsive grid-responsive-2"
+        className="grid-responsive grid-responsive-2 flex flex-col md:flex-row"
         style={{
           gap: '0',
           borderRadius: '20px',
@@ -113,6 +113,7 @@ export default function VehicleDetailPage() {
             src={getVehicleImage(vehicle) || '/placeholder-car.png'}
             alt={vehicle.name}
             loading="lazy"
+            className="w-full h-[220px] object-cover rounded-xl mb-4 md:mb-0"
             style={{
               width: '100%',
               height: '100%',
@@ -131,6 +132,7 @@ export default function VehicleDetailPage() {
 
         {/* ── RIGHT: DETAILS PANEL (glass card) ── */}
         <div
+          className="w-full mt-4 md:mt-0 px-2 sm:px-4 md:px-0"
           style={{
             background: 'rgba(255,255,255,0.04)',
             backdropFilter: 'blur(12px)',
@@ -190,6 +192,7 @@ export default function VehicleDetailPage() {
 
           {/* Spec Grid */}
           <div
+            className="space-y-3 md:space-y-0"
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -202,6 +205,7 @@ export default function VehicleDetailPage() {
               return (
                 <div
                   key={index}
+                  className="flex items-center gap-3 p-3 md:p-0"
                   style={{
                     background: 'rgba(255,255,255,0.03)',
                     border: '1px solid rgba(255,255,255,0.08)',
@@ -236,10 +240,10 @@ export default function VehicleDetailPage() {
                     <Icon size={16} strokeWidth={1.8} />
                   </div>
                   <div>
-                    <p style={{ color: '#52525B', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
+                    <p className="break-words" style={{ color: '#52525B', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
                       {item.label}
                     </p>
-                    <p style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: '600' }}>
+                    <p className="break-words mt-1" style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: '600' }}>
                       {item.value || 'N/A'}
                     </p>
                   </div>
@@ -269,6 +273,7 @@ export default function VehicleDetailPage() {
               sessionStorage.setItem('currentVehicle', JSON.stringify(vehicle));
               router.push(`/booking/${id}`);
             }}
+            className="w-full mt-5"
             style={{
               marginTop: '8px',
               width: '100%',

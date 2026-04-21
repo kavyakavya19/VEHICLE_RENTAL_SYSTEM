@@ -14,13 +14,93 @@ Perfect Wheels allows users to browse a fleet of vehicles, view detailed specifi
 
 ## 🛠 Tech Stack
 *   **Frontend**: Next.js, React, Tailwind CSS (Responsive Dark Theme UI)
-*   **Backend**: Django, Django REST Framework (DRF), PostgreSQL
+*   **Backend**: Django, Django REST Framework (DRF), MySQL
 *   **APIs**: Token-based RESTful APIs
 
 ## 🔌 Third-Party Integrations
 *   **Razorpay**: Used for securely processing wallet top-ups and checkout payments.
 *   **Google Authentication**: Simplifies the sign-up and login process via OAuth2.
+*   **Cloudinary**: Stores and serves all media properties ensuring high-performance global delivery.
 
+### Cloudinary Integration
+
+When deploying to ephemeral environments like Render, saving images locally inside a `/media/` folder leads to major issues. Every time the server restarts or deploys a new update, the disk is wiped clean, breaking all your image links. 
+
+To solve this, we migrated our image storage to **Cloudinary**. This completely separates our media assets from the backend server filesystem.
+
+**Key Benefits:**
+- **Zero File Loss:** Images are safely stored in the cloud and survive any backend deployments or restarts.
+- **Lightning Fast CDN:** Cloudinary acts as a global CDN, meaning vehicle images load much faster for users on the frontend.
+- **No Extra Cost:** We are utilizing Cloudinary’s generous free tier.
+- **Auto-Optimization:** Cloudinary automatically handles compression and serves modern formats (like WebP) on the fly, saving bandwidth without writing extra code.
+
+---
+
+### Features Implemented
+
+- **Seamless Admin Uploads:** You still upload vehicle and brand images directly through the Django Admin panel just like before.
+- **Direct Cloud Storage:** Media files bypass the local disk and are securely pushed straight into the Cloudinary bucket.
+- **Clean Frontend Delivery:** The React frontend receives an absolute URL and drops it straight into an `<img>` tag without the need for routing hacks or `/api/media/` prefixes.
+
+---
+
+### Backend Setup
+
+If you're running this project locally for the first time, getting Cloudinary set up is straightforward.
+
+**Installation:**
+Make sure you have installed the required dependencies:
+```bash
+pip install cloudinary django-cloudinary-storage
+```
+
+**Settings (`settings.py`):**
+In your Django settings, swap your default file storage backend to point to Cloudinary instead of the local disk:
+```python
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+```
+
+**Models (`models.py`):**
+Instead of the default Django `ImageField`, we inject Cloudinary's native field into our models:
+```python
+from cloudinary.models import CloudinaryField
+
+class VehicleImage(models.Model):
+    # ...
+    image = CloudinaryField('image', folder='vehicles')
+```
+
+---
+
+### Environment Variables
+
+To make the integration work, grab your API credentials from your Cloudinary dashboard.
+
+In your local `.env` file, configure the following variables:
+```env
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+*Note: Make sure you also add these exact variables in your production environment (e.g., inside your Render dashboard).*
+
+---
+
+### How It Works (The Upload Flow)
+
+1. **Admin Upload**: You upload an image via the Django Admin GUI.
+2. **Backend Intercept**: Django intercepts the file and opens a secure pipeline using your `.env` credentials.
+3. **Cloudinary Upload**: The image is pushed into the remote Cloudinary bucket.
+4. **URL Storage**: Cloudinary responds with a fully qualified HTTPS link (e.g., `https://res.cloudinary.com/.../vehicle.jpg`), which Django saves natively in MySQL.
+5. **Frontend Display**: The Next.js frontend fetches the data and puts the clean absolute URL directly into the image source. 
+
+---
+
+### ⚠️ Important Notes
+
+* **Local Files Won't Work:** Any old image data stored in the database as `/media/vehicles/...` will result in a 404 broken image on production.  
+* **Re-Upload Required:** After moving to Cloudinary, you must delete the old image values in your database and re-upload the images via the Admin panel.
+* **Keep It Absolute:** Always use the raw absolute `vehicle.image` URL handed to you by the API. Do not attempt to append any custom backend routes to it on the frontend.
 ## 🏗 System Architecture
 The system follows a decoupled client-server architecture:
 *   The **Frontend (Next.js)** acts as the presentation layer, handling UI routing, state management, and user interactions.

@@ -44,13 +44,13 @@ This is the core engine behind Perfect Wheels. Built with Django and Django REST
 
 ## 🛠 Tech Stack
 *   **Framework**: Django & Django REST Framework (DRF)
-*   **Database**: PostgreSQL
+*   **Database**: MySQL
 *   **Authentication**: JWT (JSON Web Tokens)
 *   **Payments**: Razorpay SDK
 
 ##  Setup Instructions
 1. Navigate to the project root directory.
-2. Ensure you have Python and PostgreSQL installed.
+2. Ensure you have Python and MySQL installed.
 3. Create and activate your virtual environment:
    ```bash
    python -m venv venv
