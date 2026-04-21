@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -48,4 +49,4 @@ class Vehicle(models.Model):
 
 class VehicleImage(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='vehicles/')
+    image = CloudinaryField('image', folder='vehicles')
