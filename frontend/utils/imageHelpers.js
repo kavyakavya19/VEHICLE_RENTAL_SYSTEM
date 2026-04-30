@@ -3,7 +3,7 @@ export const getVehicleImage = (vehicle) => {
     if (vehicle.image.startsWith('http')) {
       return vehicle.image;
     }
-    return `http://localhost:8000${vehicle.image}`;
+   return `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/').replace('/api/', '')}${vehicle.image}`;
   }
 
   const type = (vehicle?.vehicle_type || vehicle?.type || '').toUpperCase();
