@@ -18,7 +18,7 @@ export default function VehiclesPage() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const res = await API.get('vehicles/');
+        const res = await API.get('vehicles/?page_size=100');
         const list = Array.isArray(res.data) ? res.data : (res.data.results || []);
         setVehicles(list.filter((v) => v.availability_status === true && v.maintenance_status === false));
       } catch {

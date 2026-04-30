@@ -29,5 +29,5 @@ urlpatterns = [
     path('api/coupons/', include('apps.coupons.urls')),
     path('api/admin-dashboard/', include('apps.admin_dashboard.urls')),
     path('api/enquiries/', include('apps.enquiries.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

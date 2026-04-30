@@ -28,7 +28,7 @@ class Vehicle(models.Model):
     availability_status = models.BooleanField(default=True)
     is_available        = models.BooleanField(default=True)
     maintenance_status  = models.BooleanField(default=False)
-    image               = models.ImageField(upload_to='vehicles/', null=True, blank=True) # Direct main image
+    image               = CloudinaryField('image', folder='vehicles', null=True, blank=True)
     description         = models.TextField(blank=True)
     
     # Detailed Specs
@@ -49,4 +49,4 @@ class Vehicle(models.Model):
 
 class VehicleImage(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('image', folder='vehicles')
+    image = CloudinaryField('image', folder='vehicles', null=True, blank=True)

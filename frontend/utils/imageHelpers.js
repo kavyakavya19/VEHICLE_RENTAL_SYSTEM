@@ -1,7 +1,9 @@
 export const getVehicleImage = (vehicle) => {
   if (vehicle && vehicle.image) {
-    // Cloudinary returns the full absolute URL, so we can use it directly
-    return vehicle.image;
+    if (vehicle.image.startsWith('http')) {
+      return vehicle.image;
+    }
+    return `http://localhost:8000${vehicle.image}`;
   }
 
   const type = (vehicle?.vehicle_type || vehicle?.type || '').toUpperCase();
